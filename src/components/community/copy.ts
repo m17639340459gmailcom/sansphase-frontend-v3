@@ -1,11 +1,7 @@
 export const communityCopy = {
   zh: {
     name: "社区",
-    title: "分享你的做法，",
-    accent: "和同路人交流。",
-    intro: "聊 AI 学习、影像创作和实用工具。选一个板块，打开帖子继续读。",
     preview: "本地演示",
-    previewDescription: "帖子、昵称与互动数字均为虚构。",
     newPost: "体验发帖",
     convention: "社区公约",
     boards: "社区板块",
@@ -58,11 +54,7 @@ export const communityCopy = {
   },
   en: {
     name: "Community",
-    title: "Share your process.",
-    accent: "Find your peers.",
-    intro: "Talk about learning AI, filmmaking and practical tools. Choose a board and open a discussion.",
     preview: "Local demo",
-    previewDescription: "Posts, display names and activity counts are fictional.",
     newPost: "Try posting",
     convention: "Community guidelines",
     boards: "Community boards",

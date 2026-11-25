@@ -76,7 +76,10 @@ export function Navbar() {
     const toggle = toggleRef.current;
     const frame = requestAnimationFrame(() => menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        setOpen(false);
+      }
       if (event.key !== "Tab") return;
       const links = [...(menuRef.current?.querySelectorAll<HTMLElement>("a, button") ?? [])];
       const targets = toggle ? [toggle, ...links] : links;

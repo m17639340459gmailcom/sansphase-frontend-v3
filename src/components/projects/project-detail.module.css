@@ -29,6 +29,18 @@
 .dot[data-tone="preview"] {
   color: var(--accent);
 }
+.media {
+  --project-media-max-height: min(32rem, 58svh);
+  max-width: 56rem;
+  margin-inline: auto;
+}
+.mediaImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: var(--project-media-max-height);
+  object-fit: contain;
+}
 
 /* --------------------------- highlights --------------------------- */
 /* Hidden only once hydrated ("idle"): without JS the list simply shows. */

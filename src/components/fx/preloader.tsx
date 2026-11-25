@@ -1,60 +1,11 @@
-"use client";
+import { getTranslations } from "next-intl/server";
+import { createIntroScript } from "./intro-bootstrap";
 
-import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
-import { REDUCED_MOTION_QUERY, useHydrated } from "./hooks";
-import { createIntroScript, getIntroSkipped, markIntroDone, useIntroSkipped } from "./intro-store";
-import { lockScroll, unlockScroll } from "./lenis";
-
-/**
- * First-visit-per-session intro: counter 000→100, the brand mark, then a
- * two-panel curtain. The whole timeline is CSS (it starts at first paint and finishes even
- * without JS); React only syncs `useIntroDone()` to the curtain and unmounts the overlay.
- */
-export function Preloader({ homePath }: { homePath: string }) {
-  const t = useTranslations("FX.common.preloader");
-  const ref = useRef<HTMLDivElement>(null);
-  const skipped = useIntroSkipped();
-  const hydrated = useHydrated();
-  // Only an overlay that came with the server HTML may play; a client-only remount would replay it.
-  const [fromServer] = useState(!hydrated);
-  const [gone, setGone] = useState(false);
-
-  useEffect(() => {
-    const overlay = ref.current;
-    if (getIntroSkipped() || !overlay) return;
-    let cancelled = false;
-    let openTimer = 0;
-    const open = () => {
-      markIntroDone();
-      unlockScroll("intro");
-    };
-    lockScroll("intro");
-
-    const animations = overlay.getAnimations({ subtree: true });
-    const curtain = animations.find((animation) => (animation as CSSAnimation).animationName === "fx-pre-top");
-    const elapsed = Number(curtain?.currentTime ?? 0);
-    const wait = curtain ? Number(curtain.effect?.getTiming().delay ?? 0) - elapsed : 0;
-    if (wait > 0) openTimer = window.setTimeout(open, wait);
-    else open();
-
-    const finish = () => {
-      if (!cancelled) setGone(true);
-    };
-    Promise.all(animations.map((animation) => animation.finished)).then(finish, finish);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(openTimer);
-      unlockScroll("intro");
-    };
-  }, [skipped]);
-
-  if (!fromServer || skipped || gone) return null;
-
+export async function Preloader({ homePath }: { homePath: string }) {
+  const t = await getTranslations("FX.common.preloader");
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: createIntroScript(homePath, REDUCED_MOTION_QUERY) }} />
-      <div ref={ref} className="fx-preloader" aria-hidden="true">
+      <div className="fx-preloader" data-home-preloader aria-hidden="true">
         <div className="fx-pre-panel fx-pre-top" />
         <div className="fx-pre-panel fx-pre-bottom" />
         <div className="fx-pre-seam" />
@@ -70,8 +21,8 @@ export function Preloader({ homePath }: { homePath: string }) {
             </span>
           </div>
           <div className="fx-pre-meta">
-            <span className="fx-pre-bar" />
-            <span className="fx-pre-count" />
+            <progress className="fx-pre-bar" max={100} value={0} suppressHydrationWarning />
+            <span className="fx-pre-count" suppressHydrationWarning>000</span>
             <span className="fx-pre-status">
               <span>{t("loading")}</span>
               <span>{t("ready")}</span>
@@ -79,6 +30,7 @@ export function Preloader({ homePath }: { homePath: string }) {
           </div>
         </div>
       </div>
+      <script dangerouslySetInnerHTML={{ __html: createIntroScript(homePath) }} />
     </>
   );
 }

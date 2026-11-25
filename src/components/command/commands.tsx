@@ -22,7 +22,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useMemo, type ComponentType } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/hooks";
-import { INTRO_STORAGE_KEY } from "@/components/fx/intro-store";
+import { INTRO_STORAGE_KEY } from "@/components/fx/intro-bootstrap";
 import { scrollToTarget } from "@/components/fx/lenis";
 import { startThemeReveal } from "@/components/fx/theme-reveal";
 import { getPathname, usePathname, useRouter } from "@/i18n/navigation";
@@ -169,8 +169,7 @@ export function useCommands(data: CommandData, apple: boolean) {
         icon: ArrowUpToLine,
         run: () => scrollToTarget(0),
       },
-      // The intro never plays under reduced motion, so there is nothing to replay.
-      ...(reduced
+      ...(reduced || pathname !== "/"
         ? []
         : [
             {
@@ -184,6 +183,7 @@ export function useCommands(data: CommandData, apple: boolean) {
                 try {
                   sessionStorage.removeItem(INTRO_STORAGE_KEY);
                 } catch {}
+                if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
                 window.location.reload();
               },
             } satisfies Command,

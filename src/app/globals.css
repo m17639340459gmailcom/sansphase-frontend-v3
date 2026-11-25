@@ -408,7 +408,9 @@
     font-size: 1.0625rem;
   }
 }
-.prose-tdx > * + * {
+.prose-tdx > * + *,
+.prose-tdx > [data-book-part] > .book-block + .book-block,
+.prose-tdx > [data-book-part] + [data-book-part] > .book-block:first-child {
   margin-top: 1.25em;
 }
 .prose-tdx h2,
@@ -584,12 +586,6 @@
 @property --fx-angle {
   syntax: "<angle>";
   initial-value: 0deg;
-  inherits: false;
-}
-
-@property --fx-pre-n {
-  syntax: "<integer>";
-  initial-value: 0;
   inherits: false;
 }
 
@@ -1411,16 +1407,21 @@ html[data-theme-reveal]::view-transition-new(root) {
     box-shadow: var(--shadow-glow);
   }
 
-  /* Preloader: a pure-CSS timeline (curtain opens at 1.2s, overlay gone at 1.8s). */
+  /* The homepage opens the curtains when its streamed content has hydrated. */
   .fx-preloader {
+    display: none;
     position: fixed;
     inset: 0;
     z-index: 100;
     pointer-events: none;
-    animation: fx-pre-done 1ms linear 1.8s both;
   }
-  html[data-intro="skip"] .fx-preloader {
-    display: none;
+  html:is([data-intro="play"], [data-intro="opening"]) .fx-preloader {
+    display: block;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html:is([data-intro="play"], [data-intro="opening"]) {
+      overflow: hidden;
+    }
   }
   .fx-pre-panel {
     position: absolute;
@@ -1431,11 +1432,15 @@ html[data-theme-reveal]::view-transition-new(root) {
   }
   .fx-pre-top {
     top: 0;
-    animation: fx-pre-top 0.6s var(--fx-ease-in-out) 1.2s both;
   }
   .fx-pre-bottom {
     bottom: 0;
-    animation: fx-pre-bottom 0.6s var(--fx-ease-in-out) 1.2s both;
+  }
+  html[data-intro="opening"] .fx-pre-top {
+    animation: fx-pre-top 0.6s var(--fx-ease-in-out) both;
+  }
+  html[data-intro="opening"] .fx-pre-bottom {
+    animation: fx-pre-bottom 0.6s var(--fx-ease-in-out) both;
   }
   .fx-pre-seam {
     position: absolute;
@@ -1444,9 +1449,10 @@ html[data-theme-reveal]::view-transition-new(root) {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent) 22%, var(--amber) 50%, var(--accent) 78%, transparent);
     transform-origin: center;
-    animation:
-      fx-line-in 0.45s var(--fx-ease) 0.88s both,
-      fx-pre-fade 0.2s linear 1.22s both;
+    opacity: 0;
+  }
+  html[data-intro="opening"] .fx-pre-seam {
+    animation: fx-pre-fade 0.2s linear both;
   }
   .fx-pre-stage {
     position: absolute;
@@ -1455,24 +1461,15 @@ html[data-theme-reveal]::view-transition-new(root) {
     place-content: center;
     justify-items: center;
     gap: 1.75rem;
-    animation: fx-pre-stage-out 0.36s var(--fx-ease-in) 1.02s both;
+  }
+  html[data-intro="opening"] .fx-pre-stage {
+    animation: fx-pre-stage-out 0.26s var(--fx-ease-in) both;
   }
   .fx-pre-mark {
     width: clamp(8.5rem, 24vw, 13.5rem);
     height: auto;
     overflow: visible;
-    animation: fx-pre-mark 1.2s var(--fx-ease) both;
-  }
-  .fx-pre-glyph {
-    fill-opacity: 0;
-    stroke: var(--accent);
-    stroke-width: 1.2;
-    stroke-linejoin: round;
-    stroke-dasharray: 1 1.05;
-    stroke-dashoffset: 1.02;
-    animation:
-      fx-draw 0.85s var(--fx-ease-in-out) calc(0.06s + var(--i, 0) * 0.09s) both,
-      fx-pre-fill 0.4s ease-out calc(0.72s + var(--i, 0) * 0.07s) both;
+    animation: fx-pre-mark 0.35s var(--fx-ease) both;
   }
   .fx-pre-meta {
     display: grid;
@@ -1488,29 +1485,27 @@ html[data-theme-reveal]::view-transition-new(root) {
     color: var(--muted);
   }
   .fx-pre-bar {
-    position: relative;
+    appearance: none;
     grid-column: 1 / -1;
+    width: 100%;
     height: 1px;
     overflow: hidden;
+    border: 0;
     background: var(--line-strong);
   }
-  .fx-pre-bar::after {
-    content: "";
-    position: absolute;
-    inset: 0;
+  .fx-pre-bar::-webkit-progress-bar {
+    background: var(--line-strong);
+  }
+  .fx-pre-bar::-webkit-progress-value {
     background: var(--accent);
-    transform-origin: left center;
-    animation: fx-line-in 1.05s var(--fx-ease-in-out) 0.08s both;
+    transition: width 0.16s var(--fx-ease);
+  }
+  .fx-pre-bar::-moz-progress-bar {
+    background: var(--accent);
   }
   .fx-pre-count {
     color: var(--fg);
     font-variant-numeric: tabular-nums;
-    counter-reset: fx-h round(down, var(--fx-pre-n) / 100, 1) fx-t round(down, mod(var(--fx-pre-n), 100) / 10, 1)
-      fx-o mod(var(--fx-pre-n), 10);
-    animation: fx-pre-count 1.05s var(--fx-ease-in-out) 0.08s both;
-  }
-  .fx-pre-count::before {
-    content: counter(fx-h) counter(fx-t) counter(fx-o);
   }
   .fx-pre-status {
     display: grid;
@@ -1519,12 +1514,15 @@ html[data-theme-reveal]::view-transition-new(root) {
   .fx-pre-status > span {
     grid-area: 1 / 1;
   }
-  .fx-pre-status > span:first-child {
-    animation: fx-pre-fade 0.2s ease 0.98s both;
-  }
   .fx-pre-status > span:last-child {
     color: var(--accent);
-    animation: fx-pre-appear 0.2s ease 0.98s both;
+    visibility: hidden;
+  }
+  html[data-intro-ready] .fx-pre-status > span:first-child {
+    visibility: hidden;
+  }
+  html[data-intro-ready] .fx-pre-status > span:last-child {
+    visibility: visible;
   }
   .fx-pre-label {
     position: absolute;
@@ -1564,14 +1562,6 @@ html[data-theme-reveal]::view-transition-new(root) {
   }
 }
 
-@keyframes fx-pre-done {
-  from {
-    visibility: visible;
-  }
-  to {
-    visibility: hidden;
-  }
-}
 @keyframes fx-pre-top {
   0% {
     translate: 0 0;
@@ -1618,36 +1608,12 @@ html[data-theme-reveal]::view-transition-new(root) {
     scale: 1;
   }
 }
-@keyframes fx-pre-fill {
-  from {
-    fill-opacity: 0;
-  }
-  to {
-    fill-opacity: 1;
-  }
-}
-@keyframes fx-pre-count {
-  from {
-    --fx-pre-n: 0;
-  }
-  to {
-    --fx-pre-n: 100;
-  }
-}
 @keyframes fx-pre-fade {
   from {
     opacity: 1;
   }
   to {
     opacity: 0;
-  }
-}
-@keyframes fx-pre-appear {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
 

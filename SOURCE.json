@@ -9,7 +9,7 @@
   "upstream_content": "reference-only MPA routes are isolated from the local SANSPHASE V3 preview",
   "upstream_colors": "adapted to the V2 light and dark palette",
   "sansphase_backend_integration": "The live website uses the existing same-origin main-site gateway. This repository runs a standalone demo without that service.",
-  "deployment_performed": false,
   "standalone_content_source": "synthetic preview data",
+  "sansphase_site_release": "1.0.0-rc.1-57946ad99a2536bb",
   "distribution": "Standalone SANSPHASE V3 frontend source release"
 }

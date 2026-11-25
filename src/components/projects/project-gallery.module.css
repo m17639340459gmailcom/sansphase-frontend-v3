@@ -21,6 +21,7 @@
 .slide {
   position: relative;
   width: 100%;
+  max-height: var(--project-media-max-height);
   flex-shrink: 0;
   scroll-snap-align: center;
   scroll-snap-stop: always;

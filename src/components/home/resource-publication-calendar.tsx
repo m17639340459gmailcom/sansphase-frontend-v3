@@ -588,7 +588,7 @@ export function ResourcePublicationCalendar({
       </div>
       <PublicationGrid key={calendarKey} calendar={calendar} today={today} view={view} solid={solid} unavailable={unavailable} />
       <p className="mt-4 border-t border-line pt-3 text-[11px] leading-relaxed text-muted/80">
-        {connected ? (locale === "en" ? "First resource publication dates in Beijing time." : "按北京时间展示资源首次发布日期。") : t("source")}
+        {connected ? t("scope") : t("source", { scope: t("scope") })}
       </p>
     </div>
   );

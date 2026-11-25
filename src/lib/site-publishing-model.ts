@@ -17,7 +17,7 @@ const siteDate = new Intl.DateTimeFormat("sv-SE", {
 });
 const MS_PER_DAY = 86_400_000;
 
-export type ResourcePublicationDay = { date: string; resourceCenter: number; materials: number };
+export type ResourcePublicationDay = { date: string; resourceCenter: number; materials: number; works: number; software: number };
 export type PublicationDay = { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 };
 export type PublicationCalendar = {
   year: number | null;
@@ -26,15 +26,21 @@ export type PublicationCalendar = {
   total: number;
   days: PublicationDay[];
 };
-export type SitePublishing = { notes: NoteCard[]; noteTotal: number | null; activity: ResourcePublicationDay[] | null };
+export type HomeFeature = { id: string; title: string; summary: string; coverSrc?: string };
+export type HomeFeatures = Partial<Record<"works" | "resources" | "resource-center" | "software", HomeFeature>>;
+export type SitePublishing = { notes: NoteCard[]; noteTotal: number | null; activity: ResourcePublicationDay[] | null; featured?: HomeFeatures | null };
 
 export function publicationToday(now = new Date()): string {
   return siteDate.format(now);
 }
 
+export function countPublications({ resourceCenter, materials, works, software }: ResourcePublicationDay): number {
+  return resourceCenter + materials + works + software;
+}
+
 export function publicationYears(days: readonly ResourcePublicationDay[], today: string): number[] {
   const current = Number(today.slice(0, 4));
-  const first = days.reduce((earliest, day) => day.date <= today && day.resourceCenter + day.materials > 0
+  const first = days.reduce((earliest, day) => day.date <= today && countPublications(day) > 0
     ? Math.min(earliest, Number(day.date.slice(0, 4))) : earliest, current);
   return Array.from({ length: current - first + 1 }, (_, index) => current - index);
 }
@@ -48,7 +54,7 @@ export function publicationCalendar(days: readonly ResourcePublicationDay[], tod
     start.setUTCDate(start.getUTCDate() - start.getUTCDay());
     startDate = start.toISOString().slice(0, 10);
   }
-  const counts = new Map(days.map((day) => [day.date, day.resourceCenter + day.materials]));
+  const counts = new Map(days.map((day) => [day.date, countPublications(day)]));
   const calendar: PublicationCalendar = { year, startDate, endDate, total: 0, days: [] };
   const end = Date.parse(`${endDate}T00:00:00Z`);
   for (let timestamp = Date.parse(`${startDate}T00:00:00Z`); timestamp <= end; timestamp += MS_PER_DAY) {

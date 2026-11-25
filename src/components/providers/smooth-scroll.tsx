@@ -2,6 +2,7 @@
 
 import Lenis from "lenis";
 import { useEffect } from "react";
+import { INTRO_EVENT } from "@/components/fx/intro-bootstrap";
 import { lockScroll, setLenis, unlockScroll } from "@/components/fx/lenis";
 
 const MODAL_OPEN = "dialog[open], [aria-modal='true']";
@@ -18,6 +19,9 @@ export function SmoothScroll() {
     if (!finePointer || reduced) return;
 
     const lenis = new Lenis({
+      // Navigation can change the scroll range without resizing the viewport-height root.
+      // Read the current range on each scroll request so the first wheel event uses it too.
+      naiveDimensions: true,
       lerp: 0.09,
       smoothWheel: true,
       wheelMultiplier: 0.9,
@@ -33,6 +37,14 @@ export function SmoothScroll() {
     document.addEventListener("site:dialog-change", syncDialogState);
     syncDialogState();
 
+    const syncIntroState = () => {
+      const phase = document.documentElement.dataset.intro;
+      if (phase === "play" || phase === "opening") lockScroll("intro");
+      else unlockScroll("intro");
+    };
+    document.addEventListener(INTRO_EVENT, syncIntroState);
+    syncIntroState();
+
     let frame = 0;
     const raf = (time: number) => {
       lenis.raf(time);
@@ -43,7 +55,9 @@ export function SmoothScroll() {
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener("site:dialog-change", syncDialogState);
+      document.removeEventListener(INTRO_EVENT, syncIntroState);
       unlockScroll("dialog");
+      unlockScroll("intro");
       setLenis(null);
       lenis.destroy();
     };

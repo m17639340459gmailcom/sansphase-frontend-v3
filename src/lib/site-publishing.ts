@@ -1,15 +1,22 @@
 import { articles, localize } from "@/data/sansphase";
 import { demoBooks } from "@/data/sansphase-library";
 import { sansphaseMaterials } from "@/data/sansphase-materials";
+import { softwareSamples } from "@/data/sansphase-software";
+import { sansphaseWorks } from "@/data/sansphase-works";
 import type { ResourcePublicationDay, SitePublishing } from "@/lib/site-publishing-model";
 
 function getDemoActivity(today: string): ResourcePublicationDay[] {
   const dates = new Map<string, ResourcePublicationDay>();
-  const catalogues = { resourceCenter: demoBooks, materials: sansphaseMaterials } as const;
-  for (const kind of ["resourceCenter", "materials"] as const) {
+  const catalogues = {
+    resourceCenter: demoBooks.filter(({ vipOnly }) => !vipOnly),
+    materials: sansphaseMaterials,
+    works: sansphaseWorks,
+    software: softwareSamples,
+  };
+  for (const kind of ["resourceCenter", "materials", "works", "software"] as const) {
     for (const { date } of catalogues[kind]) {
       if (date > today) continue;
-      const day = dates.get(date) ?? { date, resourceCenter: 0, materials: 0 };
+      const day = dates.get(date) ?? { date, resourceCenter: 0, materials: 0, works: 0, software: 0 };
       day[kind]++;
       dates.set(date, day);
     }

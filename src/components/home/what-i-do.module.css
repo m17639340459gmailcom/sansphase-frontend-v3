@@ -133,6 +133,12 @@
   object-position: center top;
 }
 
+.contrast {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.58), transparent 28%, rgba(0, 0, 0, 0.64) 57%, rgba(0, 0, 0, 0.87));
+}
+
 /* The pointer is a warm lamp over the scene; neighbouring cards catch its spill. */
 .lamp {
   position: absolute;
@@ -236,6 +242,22 @@
   font-size: 0.8125rem;
   line-height: 1.9;
   text-wrap: pretty;
+}
+
+.published .title,
+.published .description {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+}
+
+.published .title {
+  -webkit-line-clamp: 3;
+}
+
+.published .description {
+  -webkit-line-clamp: 2;
 }
 
 .tall .card {

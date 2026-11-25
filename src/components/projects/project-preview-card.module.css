@@ -25,8 +25,8 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 16rem;
-  padding: 2.75rem 1.5rem 1.75rem;
+  min-height: 14rem;
+  padding: 2.5rem 1.5rem 1.5rem;
   perspective: 1100px;
   background:
     radial-gradient(ellipse at 70% 15%, hsl(var(--project-hue) 58% 67% / 0.25), transparent 65%),
@@ -61,6 +61,7 @@
 .deck {
   position: relative;
   width: 100%;
+  max-width: 27rem;
   transform-style: preserve-3d;
   transform: rotateX(calc(var(--py, 0) * -7deg)) rotateY(calc(var(--px, 0) * 9deg));
 }
@@ -83,6 +84,7 @@
   display: block;
   width: 100%;
   height: auto;
+  max-height: 16rem;
   object-fit: contain;
 }
 /* The other screens of the case, stacked behind the cover; only their title bars peek out. */
@@ -380,8 +382,8 @@
 /* ------------------------------ layout ----------------------------- */
 @media (min-width: 768px) {
   .visual {
-    min-height: 19rem;
-    padding: 3rem 2rem 2rem;
+    min-height: 17rem;
+    padding: 2.75rem 2rem 1.75rem;
   }
   .content {
     padding: 1.75rem;
@@ -395,8 +397,14 @@
   .wide .visual {
     grid-column: 2;
     grid-row: 1;
-    min-height: 31rem;
-    padding: 3.5rem 2.5rem 2.5rem;
+    min-height: 26rem;
+    padding: 2.75rem 2rem 2rem;
+  }
+  .wide:not(.mirror) .deck {
+    max-width: 31rem;
+  }
+  .wide:not(.mirror) .screenshot {
+    max-height: 19rem;
   }
   .wide .content {
     grid-column: 1;
@@ -411,7 +419,7 @@
   }
   .mirror .visual {
     grid-column: 1;
-    min-height: 26rem;
+    min-height: 24rem;
   }
   .mirror .content {
     grid-column: 2;

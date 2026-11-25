@@ -15,6 +15,8 @@ npm start -- --hostname localhost --port 4308
 
 浏览器打开 `http://localhost:4308` 查看中文首页，英文入口为 `/en`。本地预览请沿用命令和访问地址里的 `localhost`。开发时可运行 `npm run dev -- --hostname localhost --port 4308`。
 
+如果 Windows 上的构建出现 Turbopack 目录联接错误，运行 `npm run build -- --webpack`，再启动预览。
+
 这个仓库已包含独立运行所需的共享模块。单独启动时使用演示内容。真实登录、VIP、媒体权限与管理功能由主站后端通过同域接口提供。只运行这里的源码不会连接正式账号或数据库。
 
 `npm test` 运行随源码提供的独立用例。依赖主站测试工具的浏览器联调用例保留在主站工程。

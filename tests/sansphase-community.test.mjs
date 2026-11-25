@@ -7,13 +7,14 @@ const source = (path) => readFile(new URL(`../src/${path}`, import.meta.url), "u
 const community = "app/[locale]/(site)/community";
 const loadDemo = () => import("../src/data/sansphase-community.ts");
 
-test("main navigation opens the local landing before either isolated or real community actions", async () => {
+test("main navigation opens a single community gateway in local and connected modes", async () => {
   assert.equal(sansphaseLinks.community, "/community");
   assert.match(await source("data/nav.ts"), /key:\s*"community",\s*href:\s*sansphaseLinks\.community/);
   const page = await source(`${community}/page.tsx`);
   assert.doesNotMatch(page, /officialSiteLinks|https?:\/\/|community-enter|\/api\/community/i);
-  assert.match(page, /if \(siteBackendOrigin\(\)\)[\s\S]*?<CommunityEntry/);
-  assert.match(page, /CommunityFeed/);
+  assert.match(page, /<CommunityEntry\b/);
+  assert.match(page, /communityPublicHref\(post\)/);
+  assert.doesNotMatch(page, /CommunityFeed|CommunityBoards|demoTopicSummaries|\/community\/(?:new|convention)/);
 });
 
 test("demo boards retain production categories and every public board is populated", async () => {

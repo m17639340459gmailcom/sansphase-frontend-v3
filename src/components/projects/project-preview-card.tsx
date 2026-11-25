@@ -17,10 +17,11 @@ import styles from "./project-preview-card.module.css";
 export type CardVariant = "default" | "lead" | "wide";
 
 const coverSizes = {
-  default: "(min-width: 1280px) 520px, (min-width: 768px) 44vw, 100vw",
-  wide: "(min-width: 1280px) 680px, (min-width: 1024px) 55vw, (min-width: 768px) 90vw, 100vw",
+  default: "(min-width: 1024px) 432px, (min-width: 768px) calc(50vw - 5rem), (min-width: 640px) 432px, calc(100vw - 5.5rem)",
+  wide: "(min-width: 640px) 432px, calc(100vw - 5.5rem)",
+  lead: "(min-width: 1024px) 496px, (min-width: 640px) 432px, calc(100vw - 5.5rem)",
 };
-const sheetSizes = "(min-width: 1280px) 480px, (min-width: 768px) 40vw, 1px";
+const sheetSizes = "(min-width: 1280px) 432px, (min-width: 768px) 40vw, 1px";
 
 /**
  * Project card whose cover sits on a 3D deck of the case's screenshots: the deck tilts toward the
@@ -135,7 +136,7 @@ export function ProjectPreviewCard({
                     alt={pick(project.cover.alt, locale)}
                     width={project.cover.width}
                     height={project.cover.height}
-                    sizes={variant === "default" ? coverSizes.default : coverSizes.wide}
+                    sizes={coverSizes[variant]}
                     loading={lead ? "eager" : "lazy"}
                     className={styles.screenshot}
                   />

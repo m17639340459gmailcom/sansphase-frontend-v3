@@ -9,21 +9,22 @@ import {
 
 const alias = registerHooks({
   resolve(specifier, context, nextResolve) {
-    if (specifier === "@/lib/site-publishing-model") return nextResolve(new URL("../src/lib/site-publishing-model.ts", import.meta.url).href, context);
-    if (specifier === "@/lib/site-publication-date") return nextResolve(new URL("../src/lib/site-publication-date.ts", import.meta.url).href, context);
-    if (specifier === "@/data/sansphase") return nextResolve(new URL("../src/data/sansphase.ts", import.meta.url).href, context);
-    if (specifier === "@/data/sansphase-library") return nextResolve(new URL("../src/data/sansphase-library.ts", import.meta.url).href, context);
-    if (specifier === "@/data/sansphase-materials") return nextResolve(new URL("../src/data/sansphase-materials.ts", import.meta.url).href, context);
+    if (specifier.startsWith("@/")) return nextResolve(new URL(`../src/${specifier.slice(2)}.ts`, import.meta.url).href, context);
+    if (specifier === "./sansphase") return nextResolve(new URL("../src/data/sansphase.ts", import.meta.url).href, context);
     return nextResolve(specifier, context);
   },
 });
 const { loadSitePublishingData, parseResourceActivity, parseSiteNotes } = await import("../src/lib/site-publishing-data.ts");
 const { getSitePublishingPreview } = await import("../src/lib/site-publishing.ts");
+const { demoBooks } = await import("../src/data/sansphase-library.ts");
+const { sansphaseMaterials } = await import("../src/data/sansphase-materials.ts");
+const { softwareSamples } = await import("../src/data/sansphase-software.ts");
+const { sansphaseWorks } = await import("../src/data/sansphase-works.ts");
 alias.deregister();
 
 const siteOrigin = "https://www.sansphase.com";
 const today = "2026-11-24";
-const day = (date, resourceCenter = 1, materials = 0) => ({ date, resourceCenter, materials });
+const day = (date, resourceCenter = 1, materials = 0, works = 0, software = 0) => ({ date, resourceCenter, materials, works, software });
 
 test("the local homepage uses the same preview content without requesting live data", () => {
   const chinese = getSitePublishingPreview("zh", today);
@@ -39,15 +40,16 @@ test("the local homepage uses the same preview content without requesting live d
   assert.ok(earlier.activity.every(({ date }) => date <= "2026-10-01"));
 });
 
-test("homepage dates and counts come from the same books and guides shown in the two demo catalogues", async () => {
-  const { demoBooks } = await import("../src/data/sansphase-library.ts");
-  const { sansphaseMaterials } = await import("../src/data/sansphase-materials.ts");
+test("homepage dates and counts come from the entries shown in the four demo catalogues", () => {
+  const books = demoBooks.filter(({ vipOnly }) => !vipOnly);
   const { activity } = getSitePublishingPreview("zh", today);
-  const dates = [...new Set([...demoBooks, ...sansphaseMaterials].map(({ date }) => date))].sort();
+  const dates = [...new Set([...books, ...sansphaseMaterials, ...softwareSamples, ...sansphaseWorks].map(({ date }) => date))].sort();
   assert.deepEqual(activity, dates.map((date) => ({
     date,
-    resourceCenter: demoBooks.filter((book) => book.date === date).length,
+    resourceCenter: books.filter((book) => book.date === date).length,
     materials: sansphaseMaterials.filter((material) => material.date === date).length,
+    works: sansphaseWorks.filter((work) => work.date === date).length,
+    software: softwareSamples.filter((sample) => sample.date === date).length,
   })));
 });
 
@@ -60,14 +62,16 @@ test("the site's publication date changes at midnight in Beijing", () => {
 test("resource activity separates unavailable and empty feeds and validates sparse dates once", () => {
   assert.equal(parseResourceActivity({}, today), null);
   assert.deepEqual(parseResourceActivity({ resourceActivity: { days: [] } }, today), []);
-  assert.deepEqual(parseResourceActivity({ resourceActivity: { days: [day("2026-10-01"), day("2026-09-01", 0, 2), day("2026-12-01"), day("2026-10-02", 0, 0)] } }, today), [day("2026-09-01", 0, 2), day("2026-10-01")]);
-  for (const days of [[day("2026-02-29")], [day("2026-10-01", -1)], [day("2026-10-01", 1.5)], [day("2026-10-01", Number.MAX_SAFE_INTEGER, 1)], [day("2026-10-01"), day("2026-10-01", 0, 1)]]) {
+  const worksOnly = day("2026-09-01", 0, 0, 2);
+  const softwareOnly = day("2026-10-02", 0, 0, 0, 3);
+  assert.deepEqual(parseResourceActivity({ resourceActivity: { days: [day("2026-10-01"), worksOnly, day("2026-12-01"), softwareOnly, day("2026-10-03", 0, 0)] } }, today), [worksOnly, day("2026-10-01"), softwareOnly]);
+  for (const days of [[day("2026-02-29")], [day("2026-10-01", -1)], [day("2026-10-01", 1.5)], [day("2026-10-01", Number.MAX_SAFE_INTEGER, 0, 1)], [day("2026-10-01", 0, 0, 0, -1)], [day("2026-10-01"), day("2026-10-01", 0, 1)], [{date:"2026-10-01", resourceCenter:1, materials:0}]]) {
     assert.equal(parseResourceActivity({ resourceActivity: { days } }, today), null);
   }
 });
 
 test("rolling publication calendars are week-aligned with stable intensity levels and complete dates", () => {
-  const activity = [day("2025-11-22", 50), day("2025-11-23"), day("2026-11-23", 1, 2), day("2026-11-24", 5, 1), day("2026-11-25", 50)];
+  const activity = [day("2025-11-22", 50), day("2025-11-23", 0, 0, 1), day("2026-11-23", 1, 0, 0, 2), day("2026-11-24", 4, 1, 1), day("2026-11-25", 50)];
   const calendar = publicationCalendar(activity, today, null);
   assert.equal(calendar.year, null);
   assert.equal(calendar.startDate, "2025-11-23");
@@ -79,7 +83,7 @@ test("rolling publication calendars are week-aligned with stable intensity level
 });
 
 test("calendar years include leap days and retain empty futures without counting them", () => {
-  const activity = [day("2024-02-29", 0, 2), day("2026-11-25", 24)];
+  const activity = [day("2024-02-29", 0, 0, 0, 2), day("2026-11-25", 24)];
   assert.deepEqual(publicationYears(activity, today), [2026, 2025, 2024]);
   assert.deepEqual(publicationYears([], today), [2026]);
   const leap = publicationCalendar(activity, today, 2024);

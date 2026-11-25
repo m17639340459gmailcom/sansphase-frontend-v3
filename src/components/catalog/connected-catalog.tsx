@@ -1,7 +1,7 @@
-import { ArrowUpRight, Download, FileText, Monitor } from "lucide-react";
+import { Download, FileText, Monitor } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { SpotlightCard, SpotlightGroup } from "@/components/fx/spotlight";
+import { CatalogCard, CatalogCardGrid } from "@/components/catalog/catalog-card";
 import { pad, type GalleryImage } from "@/components/projects/gallery-utils";
 import { ProjectHero } from "@/components/projects/project-hero";
 import { ProjectsGrid } from "@/components/projects/projects-grid";
@@ -116,27 +116,15 @@ export async function ConnectedCatalog({ origin, kind, locale, search }: {
               );
             })}
           </nav>
-          <SpotlightGroup as="ul" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <CatalogCardGrid fillWidth={kind === "software"}>
             {items.map((item) => {
               const Icon = kind === "software" ? Monitor : FileText;
               return (
-                <li key={item.id}>
-                  <SpotlightCard className="h-full overflow-hidden rounded-2xl border border-line bg-bg-elevated">
-                    <Link href={`${catalogPaths[kind]}/${item.id}`} prefetch={false} className="flex h-full flex-col gap-3 p-6 transition-colors hover:text-accent focus-visible:text-accent">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Icon className="size-5 text-accent" aria-hidden />
-                        {item.category && <Tag tone="accent">{item.category}</Tag>}
-                        <ArrowUpRight className="ml-auto size-4 shrink-0 text-accent" aria-hidden />
-                      </div>
-                      {item.date && <time dateTime={item.date} className="font-mono text-xs text-muted">{formatDate(item.date, locale)}</time>}
-                      <h2 className="font-display text-xl font-semibold">{item.title}</h2>
-                      <p className="text-sm leading-7 text-muted">{item.summary}</p>
-                    </Link>
-                  </SpotlightCard>
-                </li>
+                <CatalogCard key={item.id} href={`${catalogPaths[kind]}/${item.id}`} title={item.title} summary={item.summary}
+                  image={item.cover ?? item.showcase} fallback={<Icon className="size-9" strokeWidth={1.25} />} />
               );
             })}
-          </SpotlightGroup>
+          </CatalogCardGrid>
           {!items.length && <p role="status" className="py-10 text-center text-muted">{text.noMatches}</p>}
         </>
       )}
