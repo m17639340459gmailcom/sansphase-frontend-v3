@@ -9,7 +9,7 @@ const hook = registerHooks({
     return nextResolve(local.includes(specifier) ? specifier + ".ts" : specifier, context);
   },
 });
-const { readSiteBooks, readSiteBook, readSiteBookPart } = await import("../src/lib/site-books.ts");
+const { readSiteBooks, readSiteBook, readSiteBookPart, readSiteBookChapter } = await import("../src/lib/site-books.ts");
 const { siteBookPosition, siteBookPositionQuery } = await import("../src/lib/site-book-position.ts");
 hook.deregister();
 
@@ -104,4 +104,33 @@ test("bookmark coordinates use the existing relocation request and cannot choose
     return Response.json({ chapter: chapter.id, revision: book.revision, part: 2, parts: chapter.parts, html: "<p>原位置</p>", relocated: true });
   });
   assert.deepEqual(result, { status: "ready", html: "<p>原位置</p>", part: 2, relocated: true });
+});
+
+test("a chapter loads all its private fragments in order and restores a later bookmark", async () => {
+  const requests = [];
+  const position = { block: "previous-bookmark", offset: 14 };
+  const result = await readSiteBookChapter(origin, cookie, id, book.revision, chapter, position, async (url, init) => {
+    assert.equal(init.cache, "no-store");
+    assert.match(init.headers.get("cookie"), /sansphase_reader_session=reader.session/);
+    const block = url.searchParams.get("block");
+    if (block) assert.equal(url.searchParams.get("offset"), "14");
+    const part = block ? 2 : Number(url.searchParams.get("part"));
+    requests.push(part);
+    return Response.json({ chapter: chapter.id, revision: book.revision, part, parts: chapter.parts,
+      html: `<p>章节片段 ${part + 1}</p>`, relocated: Boolean(block) });
+  });
+  assert.deepEqual(requests, [2, 0, 1]);
+  assert.deepEqual(result, { status: "ready", fragments: ["<p>章节片段 1</p>", "<p>章节片段 2</p>", "<p>章节片段 3</p>"], part: 2, relocated: true });
+});
+
+test("a chapter fails closed if any fragment changes edition or access is revoked", async () => {
+  const read = (error) => readSiteBookChapter(origin, cookie, id, book.revision, chapter, 0, async (url) => {
+    const part = Number(url.searchParams.get("part"));
+    if (part === 2 && error) return error;
+    return Response.json({ chapter: chapter.id, revision: part === 2 ? "changed" : book.revision,
+      part, parts: chapter.parts, html: `<p>章节片段 ${part + 1}</p>` });
+  });
+  assert.deepEqual(await read(), { status: "changed" });
+  assert.deepEqual(await read(new Response(null, { status: 401 })), { status: "sign-in" });
+  assert.deepEqual(await read(Response.json({ code: "VIP_REQUIRED" }, { status: 403 })), { status: "vip-required" });
 });

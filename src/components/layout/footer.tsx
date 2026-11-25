@@ -4,7 +4,6 @@ import { ScrambleText } from "@/components/fx/scramble-text";
 import { SpotlightGroup } from "@/components/fx/spotlight";
 import { FxTrigger } from "@/components/fx/trigger";
 import { ContactBanner } from "@/components/layout/contact-banner";
-import { FooterVisibility } from "@/components/layout/footer-visibility";
 import { Reveal } from "@/components/ui/reveal";
 import { v3NavItems } from "@/data/nav";
 import { sansphaseLinks } from "@/data/sansphase";
@@ -37,8 +36,7 @@ export async function Footer() {
   return (
     <SpotlightGroup as="footer" className="relative mt-16 border-t border-line bg-bg-elevated/50 sm:mt-20">
       <div className="container-x">
-        {/* CTA band */}
-        <FooterVisibility hideOnContact><ContactBanner /></FooterVisibility>
+        <ContactBanner />
 
         <div className="grid gap-x-10 gap-y-8 border-t border-line py-10 sm:grid-cols-2 lg:grid-cols-12">
           {/* Brand */}

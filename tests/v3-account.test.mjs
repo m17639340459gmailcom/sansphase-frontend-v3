@@ -39,6 +39,40 @@ test("uses the existing reader login and author logout contracts", async () => {
     async () => Response.json({ error: "bad credentials" }, { status: 401 })), { code: "credentials" });
 });
 
+test("account checks and login work without newer AbortSignal methods", async (t) => {
+  t.mock.method(AbortSignal, "any", () => assert.fail("AbortSignal.any is unavailable"));
+  t.mock.method(AbortSignal, "timeout", () => assert.fail("AbortSignal.timeout is unavailable"));
+  const signal = new AbortController().signal;
+  const request = async (path, options) => {
+    assert.equal(options.signal.aborted, false);
+    if (path === "/api/reader/login") assert.equal(options.headers.get("X-Login-Verification"), "proof");
+    return Response.json(path === "/api/reader/login" ? { nickname: "Reader" } : null);
+  };
+  assert.equal(await readAccount(signal, request), null);
+  assert.equal((await signIn("reader@example.test", "sample-password", "proof", signal, request)).role, "reader");
+});
+
+test("account requests keep their deadline while reading the response and honor cancellation", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const waitForAbort = (signal) => new Promise((_resolve, reject) => {
+    if (signal.aborted) reject(signal.reason);
+    else signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+  });
+  const stalled = async (_path, { signal }) => ({ ok: true, json: () => waitForAbort(signal) });
+
+  const check = readAccount(new AbortController().signal, stalled);
+  const expired = assert.rejects(check, { name: "TimeoutError" });
+  await Promise.resolve();
+  t.mock.timers.tick(8_000);
+  await expired;
+
+  const controller = new AbortController();
+  const login = signIn("reader@example.test", "sample-password", "proof", controller.signal, stalled);
+  const cancelled = assert.rejects(login, { name: "AbortError" });
+  controller.abort();
+  await cancelled;
+});
+
 test("the account page mounts the established verification control and posts no password in a URL", async () => {
   const form = await readFile(new URL("../src/components/account/sign-in.tsx", import.meta.url), "utf8");
   assert.match(form, /mountLoginVerificationControl/);

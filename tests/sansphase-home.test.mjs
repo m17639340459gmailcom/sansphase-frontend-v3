@@ -88,3 +88,20 @@ test("the author card uses a lightweight square local portrait", async () => {
   assert.deepEqual({ width, height, format }, { width: 192, height: 192, format: "webp" });
   assert.ok(image.length < 24 * 1024);
 });
+
+test("both contact banner themes share one lightweight transparent artwork", async () => {
+  const src = "/images/home/sansphase-contact-banner-shared-v1.webp";
+  const component = readFileSync(new URL("../src/components/layout/contact-banner.tsx", import.meta.url), "utf8");
+  assert.deepEqual([...component.matchAll(/<Image\s+src="([^"]+)"/g)].map(([, path]) => path), [src]);
+  assert.match(component, /alt=""\s+fill\s+loading="lazy"/);
+
+  const image = readFileSync(new URL("../public" + src, import.meta.url));
+  const { width, height, format, hasAlpha } = await sharp(image).metadata();
+  assert.equal(format, "webp");
+  assert.ok(width >= 768 && width > height);
+  assert.equal(hasAlpha, true);
+  const { channels } = await sharp(image).stats();
+  assert.equal(channels[3].min, 0);
+  assert.equal(channels[3].max, 255);
+  assert.ok(image.length <= 140 * 1024);
+});

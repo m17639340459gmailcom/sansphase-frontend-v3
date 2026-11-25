@@ -29,10 +29,11 @@ test("the learning directory exposes matching bilingual local downloads", async 
 });
 
 test("the learning route keeps its original template directory, purpose filters, and direct downloads", async () => {
-  const [page, directory, detail] = await Promise.all([
+  const [page, directory, detail, card] = await Promise.all([
     source("app/[locale]/(site)/learning/page.tsx"),
     source("components/learning/materials-directory.tsx"),
     source("app/[locale]/(site)/learning/[slug]/page.tsx"),
+    source("components/catalog/catalog-card.tsx"),
   ]);
   assert.match(page, /<PageHeader\b[\s\S]*?<MaterialsDirectory\b/);
   assert.match(page, /<NextIntlClientProvider messages=\{\{ Learning \}\}>\s*<MaterialsDirectory\b/);
@@ -40,9 +41,10 @@ test("the learning route keeps its original template directory, purpose filters,
   assert.match(directory, /^\s*["']use client["']/m);
   assert.match(directory, /\buseState\b/);
   assert.match(directory, /aria-pressed\s*=/);
-  assert.match(directory, /<SpotlightGroup\b[\s\S]*?<SpotlightCard\b/);
+  assert.match(directory, /<CatalogCardGrid\b[\s\S]*?<CatalogCard\b/);
   assert.match(directory, /href=\{material\.detailHref\}/);
-  assert.match(directory, /<a\b[^>]*href=\{materialDownloadHref\(material\.id, locale\)\}[^>]*\bdownload(?:\s|=|>)/);
+  assert.match(directory, /download=\{\{ href: materialDownloadHref\(material\.id, locale\)/);
+  assert.match(card, /<a\b[^>]*href=\{download\.href\}[^>]*\bdownload(?:\s|=|>)/);
   assert.match(detail, /<a\b[^>]*\bdownload(?:\s|=|>)/);
   for (const locale of ["zh", "en"]) {
     const { Learning } = JSON.parse(await source(`messages/${locale}.json`));

@@ -6,7 +6,7 @@ import { readSiteContent } from "./site-reader-request";
 
 const bookId = z.string().max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const chapterId = z.string().max(160).regex(/^[a-z\d_-]+$/i);
-const heading = z.object({ title: z.string().trim().min(1), level: z.union([z.literal(2), z.literal(3), z.literal(4)]), block: chapterId, offset: z.int().nonnegative() });
+const heading = z.object({ title: z.string().trim().min(1), level: z.union([z.literal(2), z.literal(3), z.literal(4)]), block: chapterId, offset: z.int().nonnegative(), part: z.int().nonnegative().optional() });
 const summary = z.object({
   id: bookId,
   title: z.string().trim().min(1),
@@ -151,4 +151,27 @@ export async function readSiteBookPart(
     (!position && result.data.part !== part) || result.data.part >= item.parts || result.data.parts !== item.parts) return { status: "changed" };
   // The existing content service sanitizes HTML before fragmenting chapters.
   return { status: "ready", html: result.data.html, part: result.data.part, relocated: result.data.relocated };
+}
+
+export async function readSiteBookChapter(
+  origin: string, cookie: string | null, id: string, revision: string, item: SiteBookChapter, selection: number | SiteBookPosition, request = fetch,
+): Promise<{ status: "ready"; fragments: string[]; part: number; relocated: boolean } | { status: "sign-in" | "vip-required" | "changed" }> {
+  const selected = await readSiteBookPart(origin, cookie, id, revision, item, selection, request);
+  if (selected.status !== "ready") return selected;
+
+  // Transport fragments share one reading page. Keep concurrent requests
+  // bounded and only render if every fragment matches the authorized edition.
+  const fragments: string[] = [];
+  const batchSize = 4;
+  for (let start = 0; start < item.parts; start += batchSize) {
+    const batch = await Promise.all(Array.from({ length: Math.min(batchSize, item.parts - start) }, (_, index) => {
+      const part = start + index;
+      return part === selected.part ? selected : readSiteBookPart(origin, cookie, id, revision, item, part, request);
+    }));
+    for (const fragment of batch) {
+      if (fragment.status !== "ready") return fragment;
+      fragments.push(fragment.html);
+    }
+  }
+  return { status: "ready", fragments, part: selected.part, relocated: selected.relocated };
 }

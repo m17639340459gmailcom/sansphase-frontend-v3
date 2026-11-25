@@ -52,7 +52,7 @@ export const mountLoginVerificationPopover: MountLoginSliderPanel = (panel, cont
   document.addEventListener("pointerdown", (event) => {
     if (event.target instanceof Node && !host.contains(event.target) && !control.contains(event.target)) dismiss();
   }, { signal: events.signal });
-  host.addEventListener("keydown", (event) => {
+  document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape" || event.defaultPrevented) return;
     event.preventDefault();
     dismiss();

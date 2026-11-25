@@ -1,18 +1,18 @@
 "use client";
 
-import { ArrowUpRight, Download, FileText, LayoutGrid, Link2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import { SpotlightCard, SpotlightGroup } from "@/components/fx/spotlight";
-import { Tag } from "@/components/ui/tag";
+import archiveCover from "../../../public/images/demo-editorial/archive-detail.webp";
+import filmCover from "../../../public/images/demo-editorial/film-detail.webp";
+import starWindowCover from "../../../public/images/demo-editorial/star-window.webp";
+import { CatalogCard, CatalogCardGrid } from "@/components/catalog/catalog-card";
 import { localize } from "@/data/sansphase";
 import { materialDownloadHref, sansphaseMaterials } from "@/data/sansphase-materials";
-import { Link } from "@/i18n/navigation";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type MaterialId = (typeof sansphaseMaterials)[number]["id"];
 
-const icons = { "learning-journal": FileText, "project-checklist": LayoutGrid, "source-index": Link2 };
+const covers = { "learning-journal": filmCover, "project-checklist": starWindowCover, "source-index": archiveCover };
 
 export function MaterialsDirectory() {
   const t = useTranslations("Learning");
@@ -43,45 +43,16 @@ export function MaterialsDirectory() {
         <p role="status" className="font-mono text-xs text-muted">{t("count", { count: entries.length })}</p>
       </div>
 
-      <SpotlightGroup as="ul" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <CatalogCardGrid>
         {entries.map((material) => {
-          const Icon = icons[material.id];
           const title = localize(material.title, locale);
-
           return (
-            <li key={material.id} className="min-w-0">
-              <SpotlightCard as="article" className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-bg-elevated p-6 sm:p-7">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="grid size-11 place-items-center rounded-xl border border-accent/25 bg-accent-soft text-accent">
-                    <Icon aria-hidden className="size-5" />
-                  </span>
-                  <Tag>Markdown</Tag>
-                </div>
-                <time className="mt-5 font-mono text-xs text-muted" dateTime={material.date}>{formatDate(material.date, locale)}</time>
-                <h2 className="mt-2 font-display text-xl font-semibold tracking-tight">
-                  <Link className="transition-colors hover:text-accent" href={material.detailHref}>{title}</Link>
-                </h2>
-                <p className="mb-6 mt-3 flex-1 text-sm leading-7 text-muted">{localize(material.summary, locale)}</p>
-                <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-line pt-2 text-sm font-medium">
-                  <Link href={material.detailHref} aria-label={t("previewNamed", { title })} className="inline-flex min-h-11 items-center gap-2 transition-colors hover:text-accent">
-                    {t("preview")}
-                    <ArrowUpRight aria-hidden className="size-4 text-accent" />
-                  </Link>
-                  <a
-                    href={materialDownloadHref(material.id, locale)}
-                    download
-                    aria-label={t("downloadNamed", { title })}
-                    className="group/download inline-flex min-h-11 items-center gap-2 text-muted transition-colors hover:text-accent"
-                  >
-                    {t("download")}
-                    <Download aria-hidden className="size-4 shrink-0 text-accent transition-transform motion-safe:group-hover/download:translate-y-0.5" />
-                  </a>
-                </div>
-              </SpotlightCard>
-            </li>
+            <CatalogCard key={material.id} href={material.detailHref} title={title} summary={localize(material.summary, locale)}
+              image={covers[material.id]} label={t("previewNamed", { title })}
+              download={{ href: materialDownloadHref(material.id, locale), label: t("downloadNamed", { title }) }} />
           );
         })}
-      </SpotlightGroup>
+      </CatalogCardGrid>
     </>
   );
 }

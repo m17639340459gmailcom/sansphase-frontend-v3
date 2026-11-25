@@ -21,21 +21,27 @@ function blocks(body: HTMLElement) {
   return Array.from(body.querySelectorAll<HTMLElement>("[data-book-block][data-book-offset]"));
 }
 
-function visiblePosition(body: HTMLElement): SiteBookPosition | null {
+function visiblePosition(body: HTMLElement): (SiteBookPosition & { part: number }) | null {
   const items = blocks(body);
   const visible = items.find((block) => block.getBoundingClientRect().bottom > positionTop) ?? items.at(-1);
   if (!visible) return null;
-  return siteBookPosition(visible.dataset.bookBlock, visible.dataset.bookOffset);
+  const position = siteBookPosition(visible.dataset.bookBlock, visible.dataset.bookOffset);
+  const part = visible.closest<HTMLElement>("[data-book-part]")?.dataset.bookPart;
+  return position && { ...position, part: Number(part ?? 0) };
 }
 
-function restorePosition(body: HTMLElement, position: SiteBookPosition, relocated: boolean) {
+function fragmentStart(body: HTMLElement, part: number) {
+  return body.querySelector<HTMLElement>(`[data-book-part="${part}"] [data-book-block]`) ?? body;
+}
+
+function restorePosition(body: HTMLElement, position: SiteBookPosition, part: number, relocated: boolean) {
   const matches = blocks(body).filter((block) => block.dataset.bookBlock === position.block);
   const block = matches.find((candidate) => {
     const beginning = Number(candidate.dataset.bookOffset);
     return beginning <= position.offset && position.offset < beginning + Math.max(candidate.textContent.length, 1);
   }) ?? matches[0];
   if (!block) {
-    if (relocated) scrollToTarget(body, { offset: -positionTop, immediate: true });
+    if (relocated) scrollToTarget(fragmentStart(body, part), { offset: -positionTop, immediate: true });
     return;
   }
   let remaining = Math.max(0, position.offset - Number(block.dataset.bookOffset));
@@ -95,13 +101,16 @@ export function PublishedBookReadingTools({ reading, chapter, chapters }: {
     const save = () => {
       if (!body.isConnected || body.getBoundingClientRect().top >= window.innerHeight) return;
       const position = visiblePosition(body);
-      if (position) bookProgress(key)?.save({ ...position, chapter: chapterId, part, revision });
+      if (position) bookProgress(key)?.save({ ...position, chapter: chapterId, revision });
     };
     const queueSave = () => {
       window.clearTimeout(pending);
       pending = window.setTimeout(save, 180);
     };
-    if (anchor) frame = window.requestAnimationFrame(() => restorePosition(body, anchor, relocated));
+    if (anchor) frame = window.requestAnimationFrame(() => restorePosition(body, anchor, part, relocated));
+    else if (part > 0) frame = window.requestAnimationFrame(() => {
+      scrollToTarget(fragmentStart(body, part), { offset: -positionTop, immediate: true });
+    });
     queueSave();
     window.addEventListener("scroll", queueSave, { passive: true });
     window.addEventListener("pagehide", save);
@@ -120,7 +129,7 @@ export function PublishedBookReadingTools({ reading, chapter, chapters }: {
       const body = document.getElementById(PUBLISHED_BOOK_BODY_ID);
       const position = body && visiblePosition(body);
       if (!position || !chapterId || part === undefined) return;
-      progress.toggle({ ...position, chapter: chapterId, part, revision });
+      progress.toggle({ ...position, chapter: chapterId, revision });
     } else {
       const index = progress.value.bookmarks.findIndex((mark) => mark.chapter === remove.chapter && mark.block === remove.block && mark.offset === remove.offset);
       if (index >= 0) progress.remove(index);

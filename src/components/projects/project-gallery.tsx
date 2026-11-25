@@ -21,7 +21,7 @@ import { Odometer } from "@/components/fx/odometer";
 import { ScrambleText } from "@/components/fx/scramble-text";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { containRect, pad, type GalleryImage } from "./gallery-utils";
+import { containRect, pad, projectDetailImageSizes, type GalleryImage } from "./gallery-utils";
 import { ProjectWindow } from "./project-window";
 import styles from "./project-gallery.module.css";
 
@@ -235,7 +235,7 @@ export function ProjectGallery({
                         alt={image.alt}
                         fill
                         preload={index === 0}
-                        sizes="(min-width: 1280px) 1200px, 100vw"
+                        sizes={projectDetailImageSizes}
                         draggable={false}
                         className="select-none object-contain"
                       />

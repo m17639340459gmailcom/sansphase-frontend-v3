@@ -75,7 +75,14 @@ export function CommandRoot({ data }: { data: CommandData }) {
       return;
     }
 
-    if (phase !== "closed" || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
+    if (phase !== "closed") {
+      if (key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        if (phase === "open") close();
+      }
+      return;
+    }
+    if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
     if (event.defaultPrevented || isTyping(event.target)) return;
 
     if (leader?.status === "waiting") {
@@ -90,6 +97,7 @@ export function CommandRoot({ data }: { data: CommandData }) {
           else router.push(href);
         }, LEADER_GO_MS);
       } else {
+        if (key === "Escape") event.preventDefault();
         setLeader(key === "Escape" ? null : { ...leader, status: "miss" });
       }
       return;
@@ -111,10 +119,10 @@ export function CommandRoot({ data }: { data: CommandData }) {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => onKeyDown(event);
-    window.addEventListener("keydown", handler);
+    document.addEventListener("keydown", handler);
     const unsubscribe = onCommandOpen((detail) => onOpenRequest(detail));
     return () => {
-      window.removeEventListener("keydown", handler);
+      document.removeEventListener("keydown", handler);
       unsubscribe();
     };
   }, []);

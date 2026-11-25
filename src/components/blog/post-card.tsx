@@ -19,6 +19,7 @@ export function PostCard({
   featured = false,
   href,
   prefetch,
+  wideCover = false,
   coverSize = post.coverSize ?? { width: 1536, height: 1024 },
 }: {
   post: PostCardEntry;
@@ -28,6 +29,7 @@ export function PostCard({
   featured?: boolean;
   href?: string;
   prefetch?: boolean;
+  wideCover?: boolean;
   coverSize?: { width: number; height: number };
 }) {
   const cursor = useTranslations("FX.common.cursor");
@@ -45,14 +47,16 @@ export function PostCard({
       )}
     >
       {post.cover && (
-        <div className="relative aspect-[3/2] shrink-0 overflow-hidden border-b border-line bg-bg">
+        <div className={cn("relative shrink-0 overflow-hidden border-b border-line bg-bg", wideCover ? "aspect-video" : "aspect-[3/2]")}>
           <Image
             src={post.cover}
             alt={post.coverAlt ?? ""}
             width={coverSize.width}
             height={coverSize.height}
             unoptimized={post.cover.startsWith("/api/media/") || post.cover === "/share/cover.jpg"}
-            sizes={featured ? "(max-width: 768px) 100vw, 1200px" : "(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"}
+            sizes={featured ? "(max-width: 768px) 100vw, 1200px" : wideCover
+              ? "(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 580px"
+              : "(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"}
             className={cn("h-full w-full object-contain", styles.cover)}
           />
           <span aria-hidden="true" className={styles.glare} />
@@ -65,21 +69,17 @@ export function PostCard({
           </span>}
         </div>
       )}
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 text-xs", featured ? "text-bg/65" : "text-muted")}>
-          {post.tags.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}
-          {post.badge && <Tag tone="accent">{post.badge}</Tag>}
-        </div>
-        <h3 className="mt-4 font-display text-xl font-semibold leading-[1.45] tracking-tight">
+      <div className="flex min-w-0 flex-1 flex-col px-4 py-3 sm:px-5">
+        <h3 className="line-clamp-2 wrap-anywhere font-display text-lg font-semibold leading-snug tracking-tight">
           <span className="bg-[linear-gradient(var(--accent),var(--accent))] bg-[length:0%_1.5px] bg-left-bottom bg-no-repeat [box-decoration-break:clone] transition-[background-size] duration-700 ease-(--fx-ease) group-hover:bg-[length:100%_1.5px] group-focus-visible:bg-[length:100%_1.5px]">
             {post.title}
           </span>
         </h3>
-        <p className={cn("mb-6 mt-3 line-clamp-3 text-sm leading-7", featured ? "text-bg/70" : "text-muted")}>
+        {post.description && <p className={cn("mt-1 line-clamp-1 wrap-anywhere text-sm leading-5", featured ? "text-bg/70" : "text-muted")}>
           {post.description}
-        </p>
-        <div className={cn("mt-auto flex items-center justify-between gap-3 border-t pt-4 font-mono text-[11px]", featured ? "border-bg/20 text-bg/65" : "border-line text-muted")}>
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        </p>}
+        <div className={cn("mt-auto flex items-center justify-between gap-2 pt-2 font-mono text-[11px]", featured ? "text-bg/65" : "text-muted")}>
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <time dateTime={post.date}>{formatDate(post.date, locale)}</time>
             {label && (post.cover ? (
               <span className="sr-only">{label}</span>
@@ -90,11 +90,12 @@ export function PostCard({
               </>
             ))}
             {post.fallback && post.locale && <span>{post.locale.toUpperCase()}</span>}
+            {post.badge && <Tag tone="accent">{post.badge}</Tag>}
           </span>
           <span
             aria-hidden="true"
             className={cn(
-              "grid h-8 w-8 shrink-0 place-items-center rounded-full transition-colors duration-300 group-hover:bg-accent group-hover:text-(--fx-on-accent) group-focus-visible:bg-accent group-focus-visible:text-(--fx-on-accent)",
+              "grid size-7 shrink-0 place-items-center rounded-full transition-colors duration-300 group-hover:bg-accent group-hover:text-(--fx-on-accent) group-focus-visible:bg-accent group-focus-visible:text-(--fx-on-accent)",
               featured ? "bg-bg/10 text-bg" : "bg-bg text-fg",
             )}
           >

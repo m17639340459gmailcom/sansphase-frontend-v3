@@ -1,3 +1,5 @@
+import { withRequestDeadline } from "./request-deadline.ts";
+
 type Role = "reader" | "owner";
 type Account = { role: "owner"; name: string } | { role: "reader"; name: string; uid: string | null; vip: boolean };
 type AccountFailure = "credentials" | "verification" | "rateLimit" | "unavailable" | "accountRequired" | "invalidDetails";
@@ -37,27 +39,29 @@ async function accountRequest(
   const multipart = payload instanceof FormData;
   if (payload && !multipart) headers.set("Content-Type", "application/json");
   if (proof) headers.set("X-Login-Verification", proof);
-  const response = await request(path, {
-    method: payload ? "POST" : "GET",
-    body: multipart ? payload : payload ? JSON.stringify(payload) : undefined,
-    cache: "no-store",
-    credentials,
-    redirect: "error",
-    headers,
-    signal: AbortSignal.any([signal, AbortSignal.timeout(payload ? 30_000 : 8_000)]),
+  return withRequestDeadline(signal, payload ? 30_000 : 8_000, async (requestSignal) => {
+    const response = await request(path, {
+      method: payload ? "POST" : "GET",
+      body: multipart ? payload : payload ? JSON.stringify(payload) : undefined,
+      cache: "no-store",
+      credentials,
+      redirect: "error",
+      headers,
+      signal: requestSignal,
+    });
+    if (path === "/api/reader/login" && response.status === 401) throw new AccountRequestError("credentials");
+    if (path === "/api/reader/login" && response.status === 403) throw new AccountRequestError("verification");
+    if (response.status === 429) throw new AccountRequestError("rateLimit");
+    if (response.status === 401) throw new AccountRequestError("accountRequired");
+    if ([400, 409, 413, 415, 422].includes(response.status)) {
+      const value: unknown = await response.json().catch(() => null);
+      const detail = value && typeof value === "object" && "error" in value &&
+        typeof value.error === "string" && value.error.length <= 300 ? value.error : undefined;
+      throw new AccountRequestError("invalidDetails", detail);
+    }
+    if (!response.ok) throw new AccountRequestError("unavailable");
+    return response.json();
   });
-  if (path === "/api/reader/login" && response.status === 401) throw new AccountRequestError("credentials");
-  if (path === "/api/reader/login" && response.status === 403) throw new AccountRequestError("verification");
-  if (response.status === 429) throw new AccountRequestError("rateLimit");
-  if (response.status === 401) throw new AccountRequestError("accountRequired");
-  if ([400, 409, 413, 415, 422].includes(response.status)) {
-    const value: unknown = await response.json().catch(() => null);
-    const detail = value && typeof value === "object" && "error" in value &&
-      typeof value.error === "string" && value.error.length <= 300 ? value.error : undefined;
-    throw new AccountRequestError("invalidDetails", detail);
-  }
-  if (!response.ok) throw new AccountRequestError("unavailable");
-  return response.json();
 }
 
 export async function readAccount(signal: AbortSignal, request = fetch) {

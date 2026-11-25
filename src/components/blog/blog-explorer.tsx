@@ -297,16 +297,15 @@ export function BlogExplorer({
                 locale={locale}
                 detail={featured.detail ?? readingLabel(featured)}
                 prefetch={prefetch}
-                total={result.total}
               />
             </motion.div>
           )}
         </AnimatePresence>
-        <ul className="relative grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+        <ul className={cn("relative grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2", !isLibrary && "lg:grid-cols-3")}>
           <AnimatePresence mode="popLayout">
             {gridPosts.map((post, index) => (
               <motion.li key={post.slug} data-reveal="" layout="position" className="h-full min-w-0" {...reveal(index + 1)}>
-                <PostCard post={post} href={post.href} locale={locale} minRead={readingLabel(post)} detail={post.detail} prefetch={prefetch} />
+                <PostCard post={post} href={post.href} locale={locale} minRead={readingLabel(post)} detail={post.detail} prefetch={prefetch} wideCover={isLibrary} />
               </motion.li>
             ))}
           </AnimatePresence>

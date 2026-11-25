@@ -60,7 +60,7 @@ export function CommunityEntry({ locale, post }: { locale: keyof typeof communit
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col items-start gap-3">
       {status === "auth" && <ButtonLink href={login} arrow>{copy.account}</ButtonLink>}
       {(status === "ready" || status === "error" || status === "pending") &&
         <Button type="button" disabled={status === "pending"} onClick={() => void enter()} arrow>
@@ -70,7 +70,7 @@ export function CommunityEntry({ locale, post }: { locale: keyof typeof communit
         setStatus("checking");
         setAttempt((previous) => previous + 1);
       }}>{copy.retry}</Button>}
-      <p role="status" className="text-sm leading-6 text-muted">{copy[status]}</p>
+      <p role="status" className="max-w-sm text-xs leading-5 text-muted">{copy[status]}</p>
     </div>
   );
 }

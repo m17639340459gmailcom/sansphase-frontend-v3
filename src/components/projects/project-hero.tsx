@@ -18,7 +18,7 @@ import { Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Tag } from "@/components/ui/tag";
 import type { Project } from "@/data/projects";
 import { Link } from "@/i18n/navigation";
-import type { GalleryImage } from "./gallery-utils";
+import { projectDetailImageSizes, type GalleryImage } from "./gallery-utils";
 import { ProjectGallery } from "./project-gallery";
 import { ProjectTitle } from "./project-title";
 import { ProjectWindow } from "./project-window";
@@ -179,39 +179,41 @@ export function ProjectHero({
       </ScrollFade>
 
       <div className="container-x mt-10 sm:mt-14">
-        {images.length > 1 ? (
-          <ProjectGallery
-            key={project.slug}
-            images={images}
-            title={title}
-            transitionName={coverName}
-            cursorLabel={cursorLabel}
-          />
-        ) : (
-          <ViewTransition name={coverName} share="morph" default="none">
-            <div>
-              <ProjectWindow label={title}>
-                {first ? (
-                  <Image
-                    src={first.src}
-                    unoptimized={first.src.startsWith("/api/media/")}
-                    alt={first.alt}
-                    width={first.width}
-                    height={first.height}
-                    preload
-                    sizes="(min-width: 1280px) 1200px, 100vw"
-                    className="block h-auto w-full object-contain"
-                  />
-                ) : (
-                  <div className="aspect-[16/8]">
-                    <GenerativeCover hue={project.hue} motif={project.motif} index={project.index} />
-                  </div>
-                )}
-              </ProjectWindow>
-            </div>
-          </ViewTransition>
-        )}
-        {note && <p className="mt-4 max-w-3xl text-xs leading-6 text-muted">{note}</p>}
+        <div className={styles.media}>
+          {images.length > 1 ? (
+            <ProjectGallery
+              key={project.slug}
+              images={images}
+              title={title}
+              transitionName={coverName}
+              cursorLabel={cursorLabel}
+            />
+          ) : (
+            <ViewTransition name={coverName} share="morph" default="none">
+              <div>
+                <ProjectWindow label={title}>
+                  {first ? (
+                    <Image
+                      src={first.src}
+                      unoptimized={first.src.startsWith("/api/media/")}
+                      alt={first.alt}
+                      width={first.width}
+                      height={first.height}
+                      preload
+                      sizes={projectDetailImageSizes}
+                      className={styles.mediaImage}
+                    />
+                  ) : (
+                    <div className="aspect-[16/8]">
+                      <GenerativeCover hue={project.hue} motif={project.motif} index={project.index} />
+                    </div>
+                  )}
+                </ProjectWindow>
+              </div>
+            </ViewTransition>
+          )}
+          {note && <p className="mt-4 max-w-3xl text-xs leading-6 text-muted">{note}</p>}
+        </div>
       </div>
     </SpotlightGroup>
   );

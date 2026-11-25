@@ -1,6 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
-import Image from "next/image";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { BorderBeam } from "@/components/fx/border-beam";
 import { ScrambleText } from "@/components/fx/scramble-text";
@@ -13,27 +12,28 @@ import { Magnetic } from "@/components/ui/magnetic";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { articles, sansphaseLinks } from "@/data/sansphase";
 import { Link } from "@/i18n/navigation";
-import type { HomeJournal } from "@/lib/home-journal";
+import { catalogPaths } from "@/lib/catalog-navigation";
+import type { HomeFeatures } from "@/lib/site-publishing-model";
 import { cn } from "@/lib/utils";
+import { BentoArtwork } from "./bento-artwork";
 import styles from "./what-i-do.module.css";
 
 // `delay` (s) offsets each card's reveal from its bento neighbours.
 const cards = [
-  { image: articles[1].cover, href: articles[1].href, layout: "tall", cursor: "view", delay: 0 },
-  { image: articles[0].cover, href: articles[0].href, layout: "wide", cursor: "view", delay: 0.1 },
-  { image: articles[2].cover, href: sansphaseLinks.contact, layout: "compact", cursor: "open", delay: 0.05 },
-  { image: articles[3].cover, href: sansphaseLinks.blogIndex, layout: "compact", cursor: "read", delay: 0.15 },
+  { kind: "works", path: catalogPaths.works, image: articles[1].cover, href: articles[1].href, layout: "tall", cursor: "view", delay: 0 },
+  { kind: "resources", path: catalogPaths.resources, image: articles[0].cover, href: articles[0].href, layout: "wide", cursor: "view", delay: 0.1 },
+  { kind: "resource-center", path: "/resources", image: articles[2].cover, href: sansphaseLinks.contact, layout: "compact", cursor: "open", delay: 0.05 },
+  { kind: "software", path: catalogPaths.software, image: articles[3].cover, href: sansphaseLinks.blogIndex, layout: "compact", cursor: "read", delay: 0.15 },
 ] as const;
 
 type Item = { title: string; body: string; label: string; cta: string };
-type Card = Omit<(typeof cards)[number], "href" | "image"> & { href: string; image: string };
+type Card = Omit<(typeof cards)[number], "href"> & { href: string };
 
-export function WhatIDo({ posts }: { posts?: HomeJournal }) {
+export function WhatIDo({ featured }: { featured?: HomeFeatures | null }) {
   const t = useTranslations("Home.whatIDo");
   const cursor = useTranslations("FX.common.cursor");
-  const locale = useLocale();
-  const connected = posts !== undefined;
-  const items = t.raw("items") as Item[];
+  const connected = featured !== undefined;
+  const demoItems = t.raw("items") as Item[];
 
   return (
     <section id="development" className="container-x section-space scroll-mt-24">
@@ -51,14 +51,18 @@ export function WhatIDo({ posts }: { posts?: HomeJournal }) {
           className="fx-spot-lit fx-grid-lit pointer-events-none absolute -inset-x-4 -inset-y-8 -z-10 sm:-inset-x-8"
         />
         <div className={styles.grid} data-feature-cards>
-          {items.map((item, i) => {
-            const card = cards[i];
-            if (!card) return null;
-            const article = connected && i < 2 ? posts?.find(({ slug }) => `${sansphaseLinks.blog}/${slug}` === card.href) : undefined;
-            const useArchive = connected && i < 2 && !article;
-            return <BentoCard key={card.image} item={useArchive ? { ...item, cta: locale === "en" ? "Browse blog articles" : "浏览博客文章" } : item}
-              card={{ ...card, href: useArchive ? sansphaseLinks.blogIndex : card.href, image: article?.cover ?? card.image }}
-              index={i} cursorText={cursor(card.cursor)} prefetch={connected ? false : undefined} />;
+          {cards.map((card, i) => {
+            const entry = featured?.[card.kind];
+            const label = t(`categories.${card.kind}`);
+            const item = connected ? {
+              title: entry?.title ?? label,
+              body: entry?.summary ?? t(featured === null ? "unavailable" : "empty"),
+              label,
+              cta: t(entry ? "viewEntry" : "browseCategory", { category: label }),
+            } : demoItems[i];
+            const href = entry ? `${card.path}/${entry.id}` : connected ? card.path : card.href;
+            return <BentoCard key={card.kind} item={item} card={{ ...card, href }} cover={entry?.coverSrc}
+              index={i} cursorText={cursor(card.cursor)} connected={connected} />;
           })}
         </div>
       </SpotlightGroup>
@@ -66,12 +70,13 @@ export function WhatIDo({ posts }: { posts?: HomeJournal }) {
   );
 }
 
-function BentoCard({ item, card, index, cursorText, prefetch }: { item: Item; card: Card; index: number; cursorText: string; prefetch?: boolean }) {
+function BentoCard({ item, card, cover, index, cursorText, connected }: { item: Item; card: Card; cover?: string; index: number; cursorText: string; connected: boolean }) {
+  const prefetch = connected ? false : undefined;
   return (
     <FxTrigger
       as="article"
       amount={card.layout === "tall" ? 0.12 : 0.25}
-      className={cn(styles.cell, styles[card.layout])}
+      className={cn(styles.cell, styles[card.layout], connected && styles.published)}
       style={{ "--delay": `${card.delay}s` } as CSSProperties}
     >
       {/* The curtain clips this wrapper, not the observed article: IntersectionObserver measures
@@ -81,15 +86,15 @@ function BentoCard({ item, card, index, cursorText, prefetch }: { item: Item; ca
           <span className={styles.shadow} aria-hidden />
           <div className={styles.media} aria-hidden>
             <div className={styles.zoom}>
-              <Image
-                src={card.image}
-                alt=""
-                fill
-                unoptimized={card.image.startsWith("/api/media/") || card.image === "/share/cover.jpg"}
+              <BentoArtwork
+                key={cover ?? card.image}
+                cover={cover}
+                fallback={card.image}
                 sizes={card.layout === "wide" ? "(min-width: 1280px) 780px, (min-width: 768px) 66vw, 100vw" : "(min-width: 1280px) 380px, (min-width: 768px) 33vw, 100vw"}
                 className={styles.artwork}
               />
             </div>
+            {connected && <span className={styles.contrast} />}
           </div>
           <span className={styles.lamp} aria-hidden />
           {card.layout === "tall" && <BorderBeam duration={9} size={90} />}
@@ -107,13 +112,14 @@ function BentoCard({ item, card, index, cursorText, prefetch }: { item: Item; ca
           </div>
           <div className={cn(styles.plane, styles.content)}>
             <div className={styles.copy}>
-              <h3 className="font-display text-2xl font-medium tracking-tight lg:text-[1.75rem]">
+              <h3 className={cn(styles.title, "font-display text-2xl font-medium tracking-tight lg:text-[1.75rem]")}>
                 <SplitText text={item.title} delay={card.delay + 0.3} />
               </h3>
-              <p className={cn(styles.description, styles.rise)}>{item.body}</p>
+              {item.body && <p className={cn(styles.description, styles.rise)}>{item.body}</p>}
               <Link
                 href={card.href}
                 prefetch={prefetch}
+                aria-label={connected ? `${item.cta} · ${item.title}` : undefined}
                 className={cn(styles.glass, styles.cta, styles.rise, "mt-5 rounded-xl px-4 py-2.5 text-[13px] text-white/90")}
               >
                 {item.cta}

@@ -6,6 +6,8 @@ export type GalleryImage = {
   height: number;
 };
 
+export const projectDetailImageSizes = "(min-width: 960px) 896px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2.5rem)";
+
 export type Box = { left: number; top: number; width: number; height: number };
 
 /** Two-digit HUD index, e.g. `pad(3)` → "03". */

@@ -14,7 +14,7 @@ import { renderMdx } from "@/lib/mdx";
 import { sansphasePageMetadata } from "@/lib/sansphase-page-metadata";
 import { siteBackendOrigin } from "@/lib/site-backend";
 import { siteBookPosition, siteBookPositionQuery } from "@/lib/site-book-position";
-import { readSiteBook, readSiteBookPart } from "@/lib/site-books";
+import { readSiteBook, readSiteBookChapter } from "@/lib/site-books";
 import { getTranslations } from "next-intl/server";
 
 type Params = { locale: string; book: string; chapter?: string[] };
@@ -108,28 +108,21 @@ async function PublishedBookPage({ origin, values, search }: {
   if (selectedId && chapterIndex < 0) notFound();
   const selected = book.chapters[chapterIndex];
   if (selected && requestedPart > selected.parts) notFound();
-  const fragment = selected && await readSiteBookPart(origin, cookie, slug, book.revision, selected, target ?? requestedPart - 1);
-  if (fragment && fragment.status !== "ready") {
-    return <PublishedBookAccess locale={locale} state={fragment.status} returnTo={fragment.status === "changed" ? chapterPath : readingPath} title={book.title} />;
+  const chapter = selected && await readSiteBookChapter(origin, cookie, slug, book.revision, selected, target ?? requestedPart - 1);
+  if (chapter && chapter.status !== "ready") {
+    return <PublishedBookAccess locale={locale} state={chapter.status} returnTo={chapter.status === "changed" ? chapterPath : readingPath} title={book.title} />;
   }
-  const partNumber = fragment ? fragment.part + 1 : requestedPart;
-  const pagination = selected?.parts > 1 ? {
-    current: partNumber,
-    total: selected.parts,
-    previousHref: partNumber > 2 ? `${chapterPath}?part=${partNumber - 1}` : partNumber === 2 ? chapterPath : undefined,
-    nextHref: partNumber < selected.parts ? `${chapterPath}?part=${partNumber + 1}` : undefined,
-  } : undefined;
   return <ResourceBookReader
     published
-    reading={{ key: book.readingKey, revision: book.revision, part: fragment?.part, target: target ?? undefined, relocated: fragment?.relocated }}
+    reading={{ key: book.readingKey, revision: book.revision, part: chapter?.part, target: target ?? undefined, relocated: chapter?.relocated }}
     chapterIndex={chapterIndex}
-    body={fragment ? <div dangerouslySetInnerHTML={{ __html: fragment.html }} /> : undefined}
+    body={chapter?.fragments.map((html, index) => (
+      <div key={index} className="contents" data-book-part={index} dangerouslySetInnerHTML={{ __html: html }} />
+    ))}
     subsections={selected?.headings.map((heading) => ({
-      title: heading.title,
-      level: heading.level,
+      ...heading,
       href: `${chapterPath}?${siteBookPositionQuery(heading)}`,
     }))}
-    pagination={pagination}
     bookDownload={book.download ?? undefined}
     cover={book.cover ? <Image src={book.cover} alt={book.title} width={book.coverSize?.width ?? 960} height={book.coverSize?.height ?? 540} unoptimized className="mt-5 h-auto max-w-full rounded-xl" /> : undefined}
     book={{

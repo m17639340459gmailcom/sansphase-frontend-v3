@@ -2,6 +2,7 @@ import type { LocalizedText } from "./sansphase";
 
 type SoftwareSample = {
   id: string;
+  date: string;
   title: LocalizedText;
   summary: LocalizedText;
   category: LocalizedText;
@@ -16,6 +17,7 @@ type SoftwareSample = {
 export const softwareSamples: readonly SoftwareSample[] = [
   {
     id: "lumen-cuts",
+    date: "2026-11-17",
     title: { zh: "光栅切片", en: "Lumen Cuts" },
     summary: { zh: "把一批镜头按场景、时长和版本排成可对照的清单，适合短片选片和团队复盘。", en: "Arrange shots by scene, duration and version for short-film selects and team review." },
     category: { zh: "影像工具", en: "Video tools" },
@@ -27,6 +29,7 @@ export const softwareSamples: readonly SoftwareSample[] = [
   },
   {
     id: "margin-index",
+    date: "2026-11-11",
     title: { zh: "页边索引", en: "Margin Index" },
     summary: { zh: "给本地 Markdown 文档做目录，按标签和出处找回读过的笔记。", en: "Index local Markdown files and find your reading notes by tag or source." },
     category: { zh: "知识管理", en: "Knowledge management" },
@@ -38,6 +41,7 @@ export const softwareSamples: readonly SoftwareSample[] = [
   },
   {
     id: "batch-shelf",
+    date: "2026-11-06",
     title: { zh: "工作台分拣器", en: "Batch Shelf" },
     summary: { zh: "用同一套命名规范整理一批导出文件，执行前先预览会发生哪些变化。", en: "Organize a batch of exports with one naming rule and preview every change before applying it." },
     category: { zh: "效率工具", en: "Productivity" },

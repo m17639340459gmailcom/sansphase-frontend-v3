@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { z } from "zod";
 import type { LocalizedText } from "@/data/sansphase";
-import { publicationToday, type NoteCard, type ResourcePublicationDay, type SitePublishing } from "@/lib/site-publishing-model";
+import { countPublications, publicationToday, type HomeFeatures, type NoteCard, type ResourcePublicationDay, type SitePublishing } from "@/lib/site-publishing-model";
 import { notePublishedAt } from "@/lib/site-publication-date";
 
 const publicationDate = z.iso.date();
@@ -9,6 +9,8 @@ const resourceDaySchema = z.object({
   date: publicationDate,
   resourceCenter: z.int().nonnegative(),
   materials: z.int().nonnegative(),
+  works: z.int().nonnegative(),
+  software: z.int().nonnegative(),
 });
 const activitySchema = z.object({ resourceActivity: z.object({ days: z.array(resourceDaySchema) }) });
 const notesSchema = z.object({ items: z.array(z.unknown()), totalPublished: z.int().nonnegative() });
@@ -31,6 +33,16 @@ const noteSchema = z.object({
   tags: z.array(z.string()).optional(),
   locked: z.boolean().optional(),
 });
+const homeFeatureSchema = noteSchema.pick({ id: true, title: true }).extend({
+  summary: z.string(),
+  coverSrc: z.string().regex(/^\/api\/media\/[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}\?view=home-cover$/i).optional().catch(undefined),
+}).optional().catch(undefined);
+const featuredSchema = z.object({ featured: z.object({
+  works: homeFeatureSchema,
+  resources: homeFeatureSchema,
+  "resource-center": homeFeatureSchema,
+  software: homeFeatureSchema,
+}) });
 
 const NOTES_LIMIT = 4;
 const MAX_NOTE_PAGES = 64;
@@ -44,6 +56,7 @@ type NoteOptions = {
 
 type LoadOptions = NoteOptions & {
   activityPreviewOrigin?: string;
+  includeFeatured?: boolean;
   linkOrigin?: string;
   now?: Date;
   request?: typeof fetch;
@@ -85,12 +98,12 @@ export function parseResourceActivity(value: unknown, today: string): ResourcePu
   const present = new Set<string>();
   let total = 0;
   for (const day of response.data.resourceActivity.days) {
-    total += day.resourceCenter + day.materials;
+    total += countPublications(day);
     if (present.has(day.date) || !Number.isSafeInteger(total)) return null;
     present.add(day.date);
   }
   return response.data.resourceActivity.days
-    .filter((day) => day.date <= today && day.resourceCenter + day.materials > 0)
+    .filter((day) => day.date <= today && countPublications(day) > 0)
     .sort((left, right) => left.date.localeCompare(right.date));
 }
 
@@ -145,13 +158,15 @@ export const readPublishedNotes = cache(async (origin: string, request = fetch) 
   return items.length === first.total && noteIds.size === items.length ? { items, totalPublished: first.totalPublished } : null;
 });
 
-export async function loadSitePublishingData({ siteOrigin, translations, activityPreviewOrigin, linkOrigin, now, request }: LoadOptions): Promise<SitePublishing> {
+export async function loadSitePublishingData({ siteOrigin, translations, activityPreviewOrigin, includeFeatured = false, linkOrigin, now, request }: LoadOptions): Promise<SitePublishing> {
   const today = publicationToday(now);
   const activityUrl = new URL("/api/content?view=bootstrap&public=1&activity=resources", loopbackOrigin(activityPreviewOrigin) ?? siteOrigin);
+  if (includeFeatured) activityUrl.searchParams.set("featured", "1");
   const [notesBody, activityBody] = await Promise.all([
     request ? readPublishedNotes(siteOrigin, request) : readPublishedNotes(siteOrigin),
     readPublic(request ?? fetch, activityUrl, AbortSignal.timeout(READ_TIMEOUT_MS)),
   ]);
   const notes = parseSiteNotes(notesBody, today, { siteOrigin: linkOrigin ?? siteOrigin, translations });
-  return { notes: notes?.cards ?? [], noteTotal: notes?.total ?? null, activity: parseResourceActivity(activityBody, today) };
+  const featured: HomeFeatures | null = includeFeatured ? featuredSchema.safeParse(activityBody).data?.featured ?? null : null;
+  return { notes: notes?.cards ?? [], noteTotal: notes?.total ?? null, activity: parseResourceActivity(activityBody, today), ...(includeFeatured ? { featured } : {}) };
 }

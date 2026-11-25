@@ -1,6 +1,6 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { CommandPalette } from "@/components/command/command-palette";
 import { Cursor } from "@/components/fx/cursor";
 import { FX_NOSCRIPT_CSS } from "@/components/fx/noscript";
@@ -31,7 +31,9 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
       <FooterVisibility>
         <Footer />
       </FooterVisibility>
-      <CommandPalette />
+      <Suspense fallback={null}>
+        <CommandPalette />
+      </Suspense>
     </NextIntlClientProvider>
   );
 }

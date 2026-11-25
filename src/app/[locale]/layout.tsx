@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { LegacyHashRedirect } from "@/components/layout/legacy-hash-redirect";
 import { NavPageScrollProvider } from "@/components/layout/nav-page-link";
+import { SiteEscapeBack } from "@/components/layout/site-escape-back";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { articles, localize, SANSPHASE_NAME } from "@/data/sansphase";
 import { languageAlternates, localizedPath, siteOrigin } from "@/i18n/paths";
@@ -87,6 +88,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <NextIntlClientProvider locale={locale} messages={null}>
             <LegacyHashRedirect english={locale === "en"} />
             <NavPageScrollProvider>{children}</NavPageScrollProvider>
+            <SiteEscapeBack />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

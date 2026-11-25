@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { BorderBeam } from "@/components/fx/border-beam";
 import { DrawUnderline } from "@/components/fx/draw-underline";
@@ -31,7 +32,14 @@ export async function ContactBanner() {
     >
       <div aria-hidden="true" className={styles.artwork}>
         <Parallax speed={0.08} className={styles.artworkLayer}>
-          <span className={styles.artworkWord}>無相</span>
+          <Image
+            src="/images/home/sansphase-contact-banner-shared-v1.webp"
+            alt=""
+            fill
+            loading="lazy"
+            unoptimized
+            className={styles.artworkImage}
+          />
         </Parallax>
       </div>
       <div aria-hidden="true" className={styles.glow} />
@@ -41,7 +49,7 @@ export async function ContactBanner() {
       <BorderBeam duration={9} size={80} className="inset-0" />
 
       <div className={styles.content}>
-        <p className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[.18em] text-white/55">
+        <p className={cn(styles.eyebrow, "flex items-center gap-3 font-mono text-[10px] uppercase tracking-[.18em]")}>
           <span className="fx-line inline-block h-px w-6 bg-current" />
           <ScrambleText text={t("bannerEyebrow")} />
         </p>
@@ -56,13 +64,13 @@ export async function ContactBanner() {
           </span>
         </h2>
         <Reveal delay={0.45}>
-          <p className="mt-4 max-w-sm text-[13px] leading-7 text-white/70">{t("bannerBody")}</p>
+          <p className={cn(styles.description, "mt-4 max-w-sm text-[13px] leading-7")}>{t("bannerBody")}</p>
           <Magnetic strength={0.3} className="mt-7">
             <ButtonLink
               href={sansphaseLinks.contact}
               variant="secondary"
               arrow
-              className="border-white/30 bg-white/5 text-white backdrop-blur-sm"
+              className={cn(styles.cta, "backdrop-blur-sm")}
             >
               {t("cta")}
             </ButtonLink>

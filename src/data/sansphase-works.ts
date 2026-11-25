@@ -7,9 +7,10 @@ function editorialCover(note: (typeof articles)[number]): NonNullable<Project["c
   return { src: note.cover, ...note.coverSize, alt: note.title };
 }
 
-export const sansphaseWorks: Project[] = [
+export const sansphaseWorks: (Project & { date: string })[] = [
   {
     slug: "sansphase-site",
+    date: "2026-11-20",
     index: "01",
     title: { zh: "星窗 · 创作档案站", en: "Star Window" },
     tagline: { zh: "把零散的项目、文章和资料汇入一处可浏览的创作档案。", en: "A browsable archive that brings projects, articles, and reference material together." },
@@ -43,6 +44,7 @@ export const sansphaseWorks: Project[] = [
   },
   {
     slug: "ai-short-video-workflow",
+    date: "2026-11-14",
     index: "02",
     title: { zh: "静港 · AI 短片工作流", en: "Quiet Harbor" },
     tagline: { zh: "用三段演示片段梳理脚本、镜头和试看之间的交接。", en: "Three sample clips map the handoff from script and shots to a timed preview." },
@@ -74,6 +76,7 @@ export const sansphaseWorks: Project[] = [
   },
   {
     slug: "personal-knowledge-base",
+    date: "2026-11-03",
     index: "03",
     title: { zh: "潮汐档案 · 个人知识库", en: "Tide Archive" },
     tagline: { zh: "将任务背景、来源和决定分别保存，让下一次接手时找得到依据。", en: "Keep briefs, sources, and decisions distinct so the next person can trace the reasoning." },

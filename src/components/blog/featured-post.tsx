@@ -18,7 +18,6 @@ export function FeaturedPost({
   post,
   locale,
   detail,
-  total,
   href,
   prefetch,
   latestLabel,
@@ -27,7 +26,6 @@ export function FeaturedPost({
   post: PostCardEntry;
   locale: string;
   detail?: string;
-  total: number;
   href?: string;
   prefetch?: boolean;
   latestLabel: string;
@@ -40,53 +38,37 @@ export function FeaturedPost({
     <Link
       href={href ?? `/blog/${post.slug}`}
       prefetch={prefetch}
-      aria-label={`${latestLabel} · ${post.title}`}
+      aria-label={[latestLabel, post.title, post.badge].filter(Boolean).join(" · ")}
       data-cursor-text={cursor("read")}
       className="fx-roll-host group/feat block rounded-3xl"
     >
       <SpotlightCard
         className={cn(
           "grid overflow-hidden rounded-3xl border border-line bg-bg-elevated transition-[border-color,box-shadow] duration-500 group-hover/feat:border-accent/40 group-hover/feat:shadow-soft",
-          post.cover && "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]",
+          post.cover && "lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]",
         )}
       >
         {post.cover && (
-          <div className="relative isolate overflow-hidden border-b border-line px-5 pb-8 pt-12 sm:px-10 sm:pb-12 sm:pt-14 lg:border-b-0 lg:border-r">
+          <div className="relative isolate grid items-center overflow-hidden border-b border-line p-4 sm:p-6 lg:border-b-0 lg:border-r lg:p-7">
             <div aria-hidden="true" className="dot-grid absolute inset-0 -z-10 opacity-50 mask-fade-y" />
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-5 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-muted sm:inset-x-10 sm:top-5"
-            >
-              <span>
-                <span className="text-accent">●</span> fig.01
-              </span>
-              <span className="tabular-nums">{width} × {height}</span>
-            </div>
-            <FloatingCover slug={post.slug} src={post.cover} alt={post.coverAlt ?? ""} width={width} height={height} sizes="(max-width: 1023px) 90vw, 640px" />
+            <FloatingCover slug={post.slug} src={post.cover} alt={post.coverAlt ?? ""} width={width} height={height}
+              sizes="(max-width: 1023px) 90vw, 680px" className="[&_img]:max-h-[28rem] [&_img]:object-contain" />
           </div>
         )}
-        <FxTrigger className="flex flex-col p-6 sm:p-8 lg:p-10">
-          <p className="eyebrow flex items-center gap-3 text-accent">
-            <span aria-hidden="true" className="relative flex h-2 w-2">
+        <FxTrigger className="flex min-w-0 flex-col justify-center gap-3 p-4 sm:p-6 lg:p-7">
+          <p className="eyebrow flex flex-wrap items-center gap-2 text-accent">
+            <span aria-hidden="true" className="relative flex size-2 shrink-0">
               <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-60" />
-              <span className="relative h-2 w-2 rounded-full bg-accent" />
+              <span className="relative size-2 rounded-full bg-accent" />
             </span>
             <ScrambleText text={latestLabel} />
-            <span aria-hidden="true" className="ml-auto font-mono tabular-nums text-muted">
-              01 / {String(total).padStart(2, "0")}
-            </span>
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-            {post.tags.slice(0, 3).map((tag) => (
-              <span key={tag}>#{tag}</span>
-            ))}
             {post.badge && <Tag tone="accent">{post.badge}</Tag>}
-          </div>
-          <h3 className="mt-4 font-display text-2xl font-semibold leading-[1.25] tracking-[-0.02em] sm:text-3xl lg:text-[2.15rem]">
+          </p>
+          <h3 className="line-clamp-2 wrap-anywhere font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
             <SplitText text={post.title} delay={0.1} stagger={0.035} />
           </h3>
-          <p className="mb-8 mt-4 line-clamp-3 text-sm leading-7 text-muted sm:text-[15px]">{post.description}</p>
-          <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-5 font-mono text-[11px] text-muted">
+          {post.description && <p className="line-clamp-2 wrap-anywhere text-sm leading-6 text-muted">{post.description}</p>}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] text-muted">
             <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <time dateTime={post.date}>{formatDate(post.date, locale)}</time>
               {detail && (

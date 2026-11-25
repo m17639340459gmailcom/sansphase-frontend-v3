@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { connection } from "next/server";
+import { Suspense } from "react";
+import { Preloader } from "@/components/fx/preloader";
 import { Facts } from "@/components/home/facts";
 import { FeaturedProjects } from "@/components/home/featured-projects";
 import { Hero } from "@/components/home/hero";
+import { HomeIntroReady } from "@/components/home/home-intro-ready";
 import { LatestPosts } from "@/components/home/latest-posts";
 import { LearningSpotlight } from "@/components/home/learning-spotlight";
 import { PublishingPanel } from "@/components/home/publishing-panel";
@@ -12,7 +15,7 @@ import { SitePublishingPanel } from "@/components/home/site-publishing-panel";
 import { TechMarquee } from "@/components/home/tech-marquee";
 import { WhatIDo } from "@/components/home/what-i-do";
 import { articles } from "@/data/sansphase";
-import { siteOrigin } from "@/i18n/paths";
+import { localizedPath, siteOrigin } from "@/i18n/paths";
 import { summarizeHomeTopics } from "@/lib/home-journal";
 import { getSiteArticleIndex } from "@/lib/sansphase-blog";
 import { isPublishedSiteOrigin, siteBackendOrigin } from "@/lib/site-backend";
@@ -45,14 +48,26 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function HomePage() {
   await connection();
-  const origin = siteBackendOrigin();
   const locale = await getLocale();
+  return (
+    <>
+      <Preloader homePath={localizedPath(locale, "/")} />
+      <Hero />
+      <Suspense fallback={null}>
+        <HomePublishing locale={locale} />
+      </Suspense>
+    </>
+  );
+}
+
+async function HomePublishing({ locale }: { locale: string }) {
+  const origin = siteBackendOrigin();
   const now = new Date();
   const today = publicationToday(now);
   const [posts, publishing] = origin
     ? await Promise.all([
         getSiteArticleIndex(origin, locale).catch(() => null),
-        loadSitePublishingData({ siteOrigin: origin, linkOrigin: siteOrigin, now }),
+        loadSitePublishingData({ siteOrigin: origin, linkOrigin: siteOrigin, includeFeatured: true, now }),
       ])
     : [undefined, undefined];
   const publicPosts = posts?.filter(({ date }) => date <= today) ?? posts;
@@ -61,9 +76,8 @@ export default async function HomePage() {
     : { other: "其他主题", noCategory: "未分类" }) : publicPosts;
   return (
     <>
-      <Hero />
       <TechMarquee />
-      <WhatIDo posts={publicPosts} />
+      <WhatIDo featured={publishing?.featured} />
       <FeaturedProjects posts={publicPosts} />
       <Facts selectedCount={publicPosts === null ? null : publicPosts?.slice(0, 4).length} topicCount={topics === null ? null : topics?.topicCount} />
       <PublishingPanel posts={publicPosts} />
@@ -71,6 +85,7 @@ export default async function HomePage() {
       <ReadingTopics topics={topics} />
       <LatestPosts posts={publicPosts} />
       <LearningSpotlight connected={Boolean(origin)} />
+      <HomeIntroReady />
     </>
   );
 }
