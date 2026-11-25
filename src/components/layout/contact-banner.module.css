@@ -1,0 +1,86 @@
+.banner {
+  --fx-spot-size: 22rem;
+  --fx-spot-glow: 34rem;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 2.5rem 0;
+  border: 1px solid #ffffff1a;
+  border-radius: 1.5rem;
+  --banner-accent: #8592ff;
+  background: #090d17;
+  color: #fff;
+}
+.accent {
+  color: var(--banner-accent);
+}
+.artwork {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Oversized so the scroll parallax never exposes an edge. */
+.artworkLayer {
+  position: absolute;
+  inset: -16% 0;
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  padding-right: 7%;
+  background:
+    linear-gradient(90deg, #090d17 26%, transparent 75%),
+    repeating-linear-gradient(90deg, #8592ff16 0 1px, transparent 1px 4rem),
+    repeating-linear-gradient(0deg, #8592ff16 0 1px, transparent 1px 4rem),
+    radial-gradient(ellipse at 81% 54%, #293369, transparent 66%);
+}
+.artworkWord {
+  color: transparent;
+  -webkit-text-stroke: 1px #8592ff8c;
+  font-family: var(--font-display), var(--font-zh), sans-serif;
+  font-size: clamp(6rem, 14vw, 12rem);
+  font-weight: 700;
+  letter-spacing: -0.08em;
+  line-height: 1;
+}
+/* Light follows the cursor across the artwork (--mx/--my from the footer spotlight). */
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    30rem circle at var(--mx, 70%) var(--my, 60%),
+    color-mix(in oklab, var(--banner-accent) 20%, transparent),
+    color-mix(in oklab, var(--banner-accent) 6%, transparent) 38%,
+    transparent 64%
+  );
+  opacity: 0;
+  transition: opacity 0.7s var(--fx-ease);
+}
+[data-fx-spot-active] .glow {
+  opacity: 1;
+}
+.content {
+  position: relative;
+  max-width: 60%;
+  padding: 3rem;
+}
+@media (max-width: 767px) {
+  .content {
+    max-width: none;
+    padding: 2rem 1.5rem 12rem;
+  }
+  .artwork {
+    inset: auto 0 0;
+    height: 12rem;
+    mask-image: linear-gradient(transparent, #000 35%);
+  }
+  .artworkLayer {
+    inset: -35% 0;
+  }
+  .artworkWord {
+    font-size: clamp(5rem, 18vw, 8rem);
+  }
+}
